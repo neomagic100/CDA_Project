@@ -52,8 +52,29 @@ void instruction_partition(unsigned instruction, unsigned *op, unsigned *r1,unsi
 /* 15 Points */
 // Based on opcode, set control signals in controls structure.
 int instruction_decode(unsigned op,struct_controls *controls)
-{
+{   // Initially set all controls to 0
+    controls->RegDst = 0;
+    controls->Jump = 0;
+    controls->Branch = 0;
+    controls->MemRead = 0;
+    controls->MemtoReg = 0;
+    controls->ALUOp = 0;
+    controls->MemWrite = 0;
+    controls->ALUSrc = 0;
+    controls->RegWrite = 0;
 
+    if (op == 0x0) { // R-Type
+        controls->RegDst = 1;
+        controls->RegWrite = 1;
+    }
+    if (op == 0x2 || op == 0x3) { // J-Type
+        controls->Jump = 1;
+    }
+    if (op >= 0x4 && op <= 0xE) { // I-Type Arithmetic/Logic
+        controls->ALUSrc = 1;
+        controls->RegWrite = 1;
+    }
+    //TODO
 }
 
 /* Read Register */
