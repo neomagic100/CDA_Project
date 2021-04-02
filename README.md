@@ -1,7 +1,7 @@
 # CDA_Project
 
 How to Add code:
-  Add File (upload your code)
+  Add File (upload your code)<br>
   Select the option "Create a new branch and start a Pull Request"
   Confirm adding a Pull Request
   
