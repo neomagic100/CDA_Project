@@ -12,12 +12,15 @@ void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
         case 1: // Subtract
             *ALUresult = A - B;
             break;
+
         case 2: // slt
             *ALUresult = ((A - B) < 0);
             break;
-        case 3: // slt
-            *ALUresult = ((A - B) < *Zero);
+        case 3: // slt                      // FIXME
+            *ALUresult = ((A - B) < 0);
             break;
+
+
         case 4: // And
             *ALUresult = A & B;
             break;
@@ -33,6 +36,11 @@ void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
         default:
             break;
     }
+
+    if (*ALUresult == 0)
+        *Zero = 1;
+    else
+        *Zero = 0;
 }
 
 /* instruction fetch */
@@ -93,13 +101,31 @@ int instruction_decode(unsigned op,struct_controls *controls)
     if (op == 0x0) { // R-Type
         controls->RegDst = 1;
         controls->RegWrite = 1;
+        controls->ALUOp = 7;
     }
     if (op == 0x2 || op == 0x3) { // J-Type
         controls->Jump = 1;
+        controls->RegDst = 2;
+        contorls->MemtoReg = 2;
+        controls->ALUOp = 0;
+        controls->ALUSrc = 2;
     }
     if (op >= 0x4 && op <= 0xE) { // I-Type Arithmetic/Logic
         controls->ALUSrc = 1;
         controls->RegWrite = 1;
+        controls->ALUOp = -1 //FIXME variable
+    }
+    if (op >= 0x20 && op <= 0x23) { // load
+        controls->MemRead = 1;
+        controls->MemtoReg = 1;
+        controls->ALUSrc = 1;
+        controls->RegWrite = 1;
+    }
+    if (op >= 0x28 && op <=0x2B) { // store
+        controls->MemtoReg = 2;
+        controls->RegDst = 2;
+        controls->MemWrite = 1;
+        controls->ALUsrc = 1;
     }
     //TODO
 }
@@ -136,7 +162,15 @@ void sign_extend(unsigned offset,unsigned *extended_value)
 // In end, call ALU function
 int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigned funct,char ALUOp,char ALUSrc,unsigned *ALUresult,char *Zero)
 {
+    char ALUControl;
+    unsigned A;
+    unsigned B;
 
+    // Return 1 if halt occurs, otherwise return 0
+    switch(ALUOp) {
+        case 0:
+
+    }
 }
 
 /* Read / Write Memory */
