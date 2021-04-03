@@ -215,7 +215,14 @@ int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigne
 /* 10 Points */
 int rw_memory(unsigned ALUresult,unsigned data2,char MemWrite,char MemRead,unsigned *memdata,unsigned *Mem)
 {
+    // Check memory alignment
+    if (MemWrite == 1) {
+        Mem[ALUresult] == data2;
+    }
 
+    if (MemRead == 1) {
+        *memdata = Mem[ALUresult];
+    }
 }
 
 
@@ -244,5 +251,24 @@ void write_register(unsigned r2,unsigned r3,unsigned memdata,unsigned ALUresult,
 // jump: left shift bits of jsec and use upper 4 bits of PC
 void PC_update(unsigned jsec,unsigned extended_value,char Branch,char Jump,char Zero,unsigned *PC)
 {
+    if (Jump == 0) {
+        *PC += 4;
 
+        // Branch taken
+        if (Branch == 1 && Zero == 1) {
+            *PC += 4 * extended_value;
+        }
+    }
+    else {
+        unsigned tempPC = *PC;
+
+        // use upper 4 bits of PC
+        tempPC >>= 28;
+        tempPC <<= 28;
+
+        //shift jsec left 2 and use upper bits of PC
+        jsec <<= 2;
+
+        *PC = tempPC | jsec;
+    }
 }
