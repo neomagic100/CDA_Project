@@ -144,7 +144,8 @@ int instruction_decode(unsigned op,struct_controls *controls)
 /* 5 Points */
 void read_register(unsigned r1,unsigned r2,unsigned *Reg,unsigned *data1,unsigned *data2)
 {
-
+    *data1 = Reg[r1];
+    *data2 = Reg[r2];
 }
 
 
@@ -222,7 +223,17 @@ int rw_memory(unsigned ALUresult,unsigned data2,char MemWrite,char MemRead,unsig
 /* 10 Points */
 void write_register(unsigned r2,unsigned r3,unsigned memdata,unsigned ALUresult,char RegWrite,char RegDst,char MemtoReg,unsigned *Reg)
 {
+    unsigned writeReg = (RegDst == 0) ? r2 : r3;
 
+    // data coming from memory
+    if (RegWrite == 1 && MemtoReg == 1) {
+        Reg[writeReg] = memdata;
+    }
+
+    // data coming from ALU ALUresult
+    if (RegWrite == 1 && MemtoReg == 0) {
+        Reg[writeReg] = ALUresult;
+    }
 }
 
 /* PC update */
