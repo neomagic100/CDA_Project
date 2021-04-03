@@ -89,7 +89,17 @@ void read_register(unsigned r1,unsigned r2,unsigned *Reg,unsigned *data1,unsigne
 /* 10 Points */
 void sign_extend(unsigned offset,unsigned *extended_value)
 {
+    // Make sure first 16 bits are 0
+    if ((offset >> 16) != 0) {
+        *extended_value = offset;
+        return;
+    }
 
+    // Check if 16th bit is 1 (negative) or 0 (positive)
+    // If positive, no need to sign extend
+    if ((offset >> 15) == 1) {
+        *extended_value = (offset | 0xFFFF0000);
+    }
 }
 
 /* ALU operations */
