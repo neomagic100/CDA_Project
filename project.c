@@ -106,14 +106,24 @@ int instruction_decode(unsigned op,struct_controls *controls)
     if (op == 0x2 || op == 0x3) { // J-Type
         controls->Jump = 1;
         controls->RegDst = 2;
-        contorls->MemtoReg = 2;
+        controls->MemtoReg = 2;
         controls->ALUOp = 0;
         controls->ALUSrc = 2;
     }
     if (op >= 0x4 && op <= 0xE) { // I-Type Arithmetic/Logic
         controls->ALUSrc = 1;
         controls->RegWrite = 1;
-        controls->ALUOp = -1 //FIXME variable
+
+        if (op == 0x4 || op == 0x5) // beq, bne
+            controls->ALUOp = 1;
+        if (op == 0xA) //slt
+            controls->ALUOp = 2;
+        if (op == 0xB) //sltu
+            controls->ALUOp = 3;
+        if (op == 0xC) //andi
+            controls->ALUOp = 4;
+        if (op == 0xD) //ori
+            controls->ALUOp = 5;
     }
     if (op >= 0x20 && op <= 0x23) { // load
         controls->MemRead = 1;
@@ -125,7 +135,7 @@ int instruction_decode(unsigned op,struct_controls *controls)
         controls->MemtoReg = 2;
         controls->RegDst = 2;
         controls->MemWrite = 1;
-        controls->ALUsrc = 1;
+        controls->ALUSrc = 1;
     }
     //TODO
 }
@@ -163,14 +173,41 @@ void sign_extend(unsigned offset,unsigned *extended_value)
 int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigned funct,char ALUOp,char ALUSrc,unsigned *ALUresult,char *Zero)
 {
     char ALUControl;
-    unsigned A;
-    unsigned B;
+    unsigned A = data1;
+    unsigned B = (ALUSrc == 0) ? data2 : extended_value;
+
+    if (ALUOp == 0x0) { // R-type - look at funct
+        switch (funct) {
+            case 0x0: //sll
+                ALUControl = 6;
+                break;
+            case 0x22: //subtact
+            case 0x23: //subu
+                ALUControl = 1;
+                break;
+            case 0x24: //and
+                ALUControl = 4;
+                break;
+            case 0x25: //or
+                ALUControl = 5;
+                break;
+            case 0x27: //not
+                ALUControl = 7;
+                break;
+            case 0x2A: // slt
+                ALUControl = 2;
+                break;
+            case 0x2B: //sltu
+                ALUControl = 3;
+                break;
+        }
+    }
+
+    ALU(A, B, ALUControl, ALUresult, Zero);
 
     // Return 1 if halt occurs, otherwise return 0
-    switch(ALUOp) {
-        case 0:
 
-    }
+
 }
 
 /* Read / Write Memory */
