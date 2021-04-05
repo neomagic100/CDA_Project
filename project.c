@@ -51,11 +51,15 @@ void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
 // Use PC >> 2 to get actual location (b/c Mem is an array of words in C)
 int instruction_fetch(unsigned PC,unsigned *Mem,unsigned *instruction)
 {
-    unsigned memAtLocation = Mem[PC >> 2];
+    unsigned address = PC >> 2;
+
+    if (address % 4 != 0)
+      return 1;
 
     //TODO Check for word alignment
 
-    *instruction = memAtLocation;
+    *instruction = Mem[address];
+    return 0;
 }
 
 
@@ -75,7 +79,7 @@ void instruction_partition(unsigned instruction, unsigned *op, unsigned *r1,unsi
     *op = instruction >> (TOTAL_BITS - OP_BITS);
     *r1 = (instruction << OP_BITS) >> (TOTAL_BITS - R_BITS);
     *r2 = (instruction << (R_BITS + OP_BITS)) >> (TOTAL_BITS - R_BITS);
-    *r3 = *r2 = (instruction << (R_BITS + R_BITS + OP_BITS)) >> (TOTAL_BITS - R_BITS);
+    *r3 = (instruction << (R_BITS + R_BITS + OP_BITS)) >> (TOTAL_BITS - R_BITS);
     *funct = (instruction << (TOTAL_BITS - FUNCT_BITS)) >> (TOTAL_BITS - FUNCT_BITS);
     *offset = (instruction << (TOTAL_BITS - OFFSET_BITS)) >> (TOTAL_BITS - OFFSET_BITS);
     *jsec = (instruction << (TOTAL_BITS - JSEC_BITS)) >> (TOTAL_BITS - JSEC_BITS);
@@ -103,14 +107,14 @@ int instruction_decode(unsigned op,struct_controls *controls)
         controls->RegWrite = 1;
         controls->ALUOp = 7;
     }
-    if (op == 0x2 || op == 0x3) { // J-Type
+    else if (op == 0x2 || op == 0x3) { // J-Type
         controls->Jump = 1;
         controls->RegDst = 2;
         controls->MemtoReg = 2;
         controls->ALUOp = 0;
         controls->ALUSrc = 2;
     }
-    if (op >= 0x4 && op <= 0xE) { // I-Type Arithmetic/Logic
+    else if (op >= 0x4 && op <= 0xE) { // I-Type Arithmetic/Logic
         controls->ALUSrc = 1;
         controls->RegWrite = 1;
 
@@ -125,19 +129,23 @@ int instruction_decode(unsigned op,struct_controls *controls)
         if (op == 0xD) //ori
             controls->ALUOp = 5;
     }
-    if (op >= 0x20 && op <= 0x23) { // load
+    else if (op >= 0x20 && op <= 0x23) { // load
         controls->MemRead = 1;
         controls->MemtoReg = 1;
         controls->ALUSrc = 1;
         controls->RegWrite = 1;
     }
-    if (op >= 0x28 && op <=0x2B) { // store
+    else if (op >= 0x28 && op <=0x2B) { // store
         controls->MemtoReg = 2;
         controls->RegDst = 2;
         controls->MemWrite = 1;
         controls->ALUSrc = 1;
     }
-    //TODO
+    else {
+        return 1;
+    }
+
+    return 0;
 }
 
 /* Read Register */
@@ -201,13 +209,15 @@ int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigne
             case 0x2B: //sltu
                 ALUControl = 3;
                 break;
+            default:
+                return 1;
         }
     }
 
     ALU(A, B, ALUControl, ALUresult, Zero);
 
     // Return 1 if halt occurs, otherwise return 0
-
+    return 0;
 
 }
 
@@ -216,6 +226,9 @@ int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigne
 int rw_memory(unsigned ALUresult,unsigned data2,char MemWrite,char MemRead,unsigned *memdata,unsigned *Mem)
 {
     // Check memory alignment
+    if (ALUresult % 4 != 0)
+        return 1;
+
     if (MemWrite == 1) {
         Mem[ALUresult] == data2;
     }
@@ -223,6 +236,8 @@ int rw_memory(unsigned ALUresult,unsigned data2,char MemWrite,char MemRead,unsig
     if (MemRead == 1) {
         *memdata = Mem[ALUresult];
     }
+
+    return 0;
 }
 
 
