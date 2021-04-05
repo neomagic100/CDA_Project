@@ -172,6 +172,8 @@ void sign_extend(unsigned offset,unsigned *extended_value)
     if ((offset >> 15) == 1) {
         *extended_value = (offset | 0xFFFF0000);
     }
+    else
+    	*extended_value = offset;
 }
 
 /* ALU operations */
@@ -185,7 +187,7 @@ int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigne
     unsigned A = data1;
     unsigned B = (ALUSrc == 0) ? data2 : extended_value;
 
-    if (ALUOp == 0x0) { // R-type - look at funct
+    if (ALUSrc == 0) { // R-type - look at funct
         switch (funct) {
             case 0x0: //sll
                 ALUControl = 6;
@@ -226,14 +228,15 @@ int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigne
 int rw_memory(unsigned ALUresult,unsigned data2,char MemWrite,char MemRead,unsigned *memdata,unsigned *Mem)
 {
     // Check memory alignment
-    if (ALUresult % 4 != 0)
-        return 1;
+
 
     if (MemWrite == 1) {
-        Mem[ALUresult] == data2;
+        Mem[ALUresult] = data2;
     }
 
     if (MemRead == 1) {
+    	if (ALUresult % 4 != 0)
+    	        return 1;
         *memdata = Mem[ALUresult];
     }
 
