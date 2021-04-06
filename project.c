@@ -51,6 +51,7 @@ void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
 // Use PC >> 2 to get actual location (b/c Mem is an array of words in C)
 int instruction_fetch(unsigned PC,unsigned *Mem,unsigned *instruction)
 {
+    printf("\nPC = %d (%x hex)\n", PC, PC);
     unsigned address = PC >> 2;
 
     if (address % 4 != 0)
@@ -59,6 +60,7 @@ int instruction_fetch(unsigned PC,unsigned *Mem,unsigned *instruction)
     //TODO Check for word alignment
 
     *instruction = Mem[address];
+
     return 0;
 }
 
@@ -249,6 +251,7 @@ int rw_memory(unsigned ALUresult,unsigned data2,char MemWrite,char MemRead,unsig
 void write_register(unsigned r2,unsigned r3,unsigned memdata,unsigned ALUresult,char RegWrite,char RegDst,char MemtoReg,unsigned *Reg)
 {
     unsigned writeReg = (RegDst == 0) ? r2 : r3;
+    writeReg *= 4;
 
     // data coming from memory
     if (RegWrite == 1 && MemtoReg == 1) {
@@ -269,6 +272,7 @@ void write_register(unsigned r2,unsigned r3,unsigned memdata,unsigned ALUresult,
 // jump: left shift bits of jsec and use upper 4 bits of PC
 void PC_update(unsigned jsec,unsigned extended_value,char Branch,char Jump,char Zero,unsigned *PC)
 {
+    printf("\nPC = %d (%x hex)\n", *PC, *PC);
     if (Jump == 0) {
         *PC += 4;
 
@@ -276,7 +280,10 @@ void PC_update(unsigned jsec,unsigned extended_value,char Branch,char Jump,char 
         if (Branch == 1 && Zero == 1) {
             *PC += 4 * extended_value;
         }
+
+
     }
+
     else {
         unsigned tempPC = *PC;
 
