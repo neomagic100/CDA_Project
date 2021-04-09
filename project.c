@@ -251,7 +251,6 @@ int rw_memory(unsigned ALUresult,unsigned data2,char MemWrite,char MemRead,unsig
 void write_register(unsigned r2,unsigned r3,unsigned memdata,unsigned ALUresult,char RegWrite,char RegDst,char MemtoReg,unsigned *Reg)
 {
     unsigned writeReg = (RegDst == 0) ? r2 : r3;
-    writeReg *= 4;
 
     // data coming from memory
     if (RegWrite == 1 && MemtoReg == 1) {
