@@ -236,13 +236,13 @@ int rw_memory(unsigned ALUresult,unsigned data2,char MemWrite,char MemRead,unsig
 
 
     if (MemWrite == 1) {
-        Mem[ALUresult] = data2;
+        Mem[ALUresult>>2] = data2;
     }
 
     if (MemRead == 1) {
     	if (ALUresult % 4 != 0)
     	        return 1;
-        *memdata = Mem[ALUresult];
+        *memdata = Mem[ALUresult>>2];
     }
 
     return 0;
