@@ -193,8 +193,12 @@ int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigne
             case 0x0: //sll
                 ALUControl = 6;
                 break;
+            case 0x21: //addu //FIXME
+            case 0x20: //add
+                ALUControl = 0;
+                break;
             case 0x22: //subtact
-            case 0x23: //subu
+            case 0x23: //subu // FIXME
                 ALUControl = 1;
                 break;
             case 0x24: //and
@@ -209,7 +213,7 @@ int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigne
             case 0x2A: // slt
                 ALUControl = 2;
                 break;
-            case 0x2B: //sltu
+            case 0x2B: //sltu //FIXME
                 ALUControl = 3;
                 break;
             default:
