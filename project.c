@@ -5,6 +5,9 @@
 /* 10 Points */
 void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
 {
+    signed Asigned = (signed)A;
+    signed Bsigned = (signed)B;
+
     switch (ALUControl) {
         case 0: // Add
             *ALUresult = A + B;
@@ -14,10 +17,10 @@ void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
             break;
 
         case 2: // slt
-            *ALUresult = ((A - B) < 0);
+            *ALUresult = ((Asigned - Bsigned) < 0);
             break;
-        case 3: // slt                      // FIXME
-            *ALUresult = ((A - B) < 0);
+        case 3: // sltu                      // FIXME
+            *ALUresult = ((B - A) > 0);
             break;
 
 
@@ -115,12 +118,16 @@ int instruction_decode(unsigned op,struct_controls *controls)
         controls->ALUOp = 0;
         controls->ALUSrc = 2;
     }
-    else if (op >= 0x4 && op <= 0xE) { // I-Type Arithmetic/Logic
+    else if (op == 0x4 || op == 0x5) {
+        controls->ALUOp = 1;
+        controls->Branch = 1;
+        controls->RegDst = 2;
+        controls->MemtoReg = 2;
+    }
+    else if (op >= 0x8 && op <= 0xF) { // I-Type Arithmetic/Logic
         controls->ALUSrc = 1;
         controls->RegWrite = 1;
 
-        if (op == 0x4 || op == 0x5) // beq, bne
-            controls->ALUOp = 1;
         if (op == 0xA) //slt
             controls->ALUOp = 2;
         if (op == 0xB) //sltu
@@ -129,7 +136,9 @@ int instruction_decode(unsigned op,struct_controls *controls)
             controls->ALUOp = 4;
         if (op == 0xD) //ori
             controls->ALUOp = 5;
-    }
+        if (op == 0xF) //lui
+            controls->ALUOp = 6;
+    }       
     else if (op >= 0x20 && op <= 0x23) { // load
         controls->MemRead = 1;
         controls->MemtoReg = 1;
@@ -219,6 +228,10 @@ int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigne
             default:
                 return 1;
         }
+    }
+  
+    else {
+        ALUControl = ALUOp; //Not sure of this line. (Placeholder)
     }
 
     ALU(A, B, ALUControl, ALUresult, Zero);
