@@ -138,7 +138,7 @@ int instruction_decode(unsigned op,struct_controls *controls)
             controls->ALUOp = 5;
         if (op == 0xF) //lui
             controls->ALUOp = 6;
-    }       
+    }
     else if (op >= 0x20 && op <= 0x23) { // load
         controls->MemRead = 1;
         controls->MemtoReg = 1;
@@ -193,52 +193,60 @@ void sign_extend(unsigned offset,unsigned *extended_value)
 // In end, call ALU function
 int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigned funct,char ALUOp,char ALUSrc,unsigned *ALUresult,char *Zero)
 {
-    char ALUControl;
-    unsigned A = data1;
-    unsigned B = (ALUSrc == 0) ? data2 : extended_value;
+    // if the ALUSrc is 1, set data2 to extended_value
+   	if (ALUSrc == 1) {
+   		data2 = extended_value;
+   	}
 
-    if (ALUSrc == 0) { // R-type - look at funct
-        switch (funct) {
-            case 0x0: //sll
-                ALUControl = 6;
-                break;
-            case 0x21: //addu //FIXME
-            case 0x20: //add
-                ALUControl = 0;
-                break;
-            case 0x22: //subtact
-            case 0x23: //subu // FIXME
-                ALUControl = 1;
-                break;
-            case 0x24: //and
-                ALUControl = 4;
-                break;
-            case 0x25: //or
-                ALUControl = 5;
-                break;
-            case 0x27: //not
-                ALUControl = 7;
-                break;
-            case 0x2A: // slt
-                ALUControl = 2;
-                break;
-            case 0x2B: //sltu //FIXME
-                ALUControl = 3;
-                break;
-            default:
-                return 1;
-        }
-    }
-  
+   	// 7 is R-type instruction
+    if (ALUOp == 7) {
+       	// set the correct ALUOp for each R-type instruction
+       	switch(funct) {
+   	    	// add
+   	    	case 32:
+   	    		ALUOp = 0;
+   	    		break;
+   	    	// subtract
+   	    	case 34:
+   	    		ALUOp = 1;
+   	    		break;
+   	    	// set less than signed
+   	    	case 42:
+   	    		ALUOp = 2;
+   	    		break;
+   	    	// set less than unsigned
+   	    	case 43:
+   	    		ALUOp = 3;
+   	    		break;
+   	    	// and
+   	    	case 36:
+   	    		ALUOp = 4;
+   	    		break;
+   	    	// or
+   	    	case 37:
+   	    		ALUOp = 5;
+   	    		break;
+   	    	// shift left right variable
+   	    	case 4:
+   	    		ALUOp = 6;
+   	    		break;
+   	    	// nor
+   	    	case 39:
+   	    		ALUOp = 7;
+   	    		break;
+   	    	// default for halt or don't care
+   	    	default:
+   	    		return 1;
+   	    }
+       	    // call ALU function
+       	    ALU(data1, data2, ALUOp, ALUresult, Zero);
+    } 
     else {
-        ALUControl = ALUOp; //Not sure of this line. (Placeholder)
+       	// call ALU for non-functions
+       	ALU(data1, data2, ALUOp, ALUresult, Zero);
     }
 
-    ALU(A, B, ALUControl, ALUresult, Zero);
-
-    // Return 1 if halt occurs, otherwise return 0
     return 0;
-
 }
 
 /* Read / Write Memory */
