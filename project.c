@@ -17,7 +17,7 @@ void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
             break;
 
         case 2: // slt
-            *ALUresult = ((Asigned - Bsigned) < 0);
+            *ALUresult = ((Bsigned - Asigned) > 0);
             break;
         case 3: // sltu                      // FIXME
             *ALUresult = ((B - A) > 0);
@@ -118,7 +118,7 @@ int instruction_decode(unsigned op,struct_controls *controls)
         controls->ALUOp = 0;
         controls->ALUSrc = 2;
     }
-    else if (op == 0x4 || op == 0x5) {
+    else if (op == 0x4 || op == 0x5) { //beq, bne
         controls->ALUOp = 1;
         controls->Branch = 1;
         controls->RegDst = 2;
@@ -128,7 +128,27 @@ int instruction_decode(unsigned op,struct_controls *controls)
         controls->ALUSrc = 1;
         controls->RegWrite = 1;
 
-        if (op == 0xA) //slt
+        switch (op) {
+            case 0xA: //slt
+                controls->ALUOp = 2;
+                break;
+            case 0xB: //sltu
+                controls->ALUOp = 3;
+                break;
+            case 0xC: //andi
+                controls->ALUOp = 4;
+                break;
+            case 0xD: //ori
+                controls->ALUOp = 5;
+                break;
+            case 0xF: //lui
+                controls->ALUOp = 6;
+                break;
+            default: //catch
+                return 1;
+        }
+
+        /*if (op == 0xA) //slt
             controls->ALUOp = 2;
         if (op == 0xB) //sltu
             controls->ALUOp = 3;
@@ -137,7 +157,7 @@ int instruction_decode(unsigned op,struct_controls *controls)
         if (op == 0xD) //ori
             controls->ALUOp = 5;
         if (op == 0xF) //lui
-            controls->ALUOp = 6;
+            controls->ALUOp = 6;*/
     }
     else if (op >= 0x20 && op <= 0x23) { // load
         controls->MemRead = 1;
