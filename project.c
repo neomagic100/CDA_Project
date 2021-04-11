@@ -1,3 +1,13 @@
+/************************************************************
+ *                      MIPS Project 
+ *
+ * Authors: Michael Bernhardt, Tyler Weber, Zachary Mace
+ * Course: CDA 3103C Section 1 (T/Th 9:00 am)
+ * Group: 85
+ * Date: April 11, 2021
+ *
+ ************************************************************/
+
 #include "spimcore.h"
 
 
@@ -5,7 +15,7 @@
 /* 10 Points */
 void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
 {
-    signed Asigned = (signed)A;
+    signed Asigned = (signed)A; 
     signed Bsigned = (signed)B;
 
     switch (ALUControl) {
@@ -15,15 +25,12 @@ void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
         case 1: // Subtract
             *ALUresult = A - B;
             break;
-
         case 2: // slt
             *ALUresult = ((Bsigned - Asigned) > 0);
             break;
         case 3: // sltu                      // FIXME
-            *ALUresult = ((B - A) > 0);
+            *ALUresult = ((A - B) < 0);
             break;
-
-
         case 4: // And
             *ALUresult = A & B;
             break;
@@ -40,6 +47,7 @@ void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
             break;
     }
 
+    // Set Zero
     if (*ALUresult == 0)
         *Zero = 1;
     else
@@ -56,11 +64,11 @@ int instruction_fetch(unsigned PC,unsigned *Mem,unsigned *instruction)
 {
     unsigned address = PC >> 2;
 
+    // Check if word aligned
     if (PC % 4 != 0)
       return 1;
 
-    //TODO Check for word alignment
-
+    // Read instruction from the PC shifted left twice
     *instruction = Mem[address];
 
     return 0;
@@ -72,6 +80,7 @@ int instruction_fetch(unsigned PC,unsigned *Mem,unsigned *instruction)
 // No need to check op code. Make copies of all sections.
 void instruction_partition(unsigned instruction, unsigned *op, unsigned *r1,unsigned *r2, unsigned *r3, unsigned *funct, unsigned *offset, unsigned *jsec)
 {
+    // Constants: Bit sizes of instructions
     const int OP_BITS = 6;
     const int FUNCT_BITS = 6;
     const int R_BITS = 5;
@@ -129,6 +138,9 @@ int instruction_decode(unsigned op,struct_controls *controls)
         controls->RegWrite = 1;
 
         switch (op) {
+            case 0x8:
+            case 0x9:
+                break;
             case 0xA: //slt
                 controls->ALUOp = 2;
                 break;
@@ -147,17 +159,6 @@ int instruction_decode(unsigned op,struct_controls *controls)
             default: //catch
                 return 1;
         }
-
-        /*if (op == 0xA) //slt
-            controls->ALUOp = 2;
-        if (op == 0xB) //sltu
-            controls->ALUOp = 3;
-        if (op == 0xC) //andi
-            controls->ALUOp = 4;
-        if (op == 0xD) //ori
-            controls->ALUOp = 5;
-        if (op == 0xF) //lui
-            controls->ALUOp = 6;*/
     }
     else if (op >= 0x20 && op <= 0x23) { // load
         controls->MemRead = 1;
@@ -171,7 +172,7 @@ int instruction_decode(unsigned op,struct_controls *controls)
         controls->MemWrite = 1;
         controls->ALUSrc = 1;
     }
-    else {
+    else { // else instruction not recongnized, return halt
         return 1;
     }
 
@@ -182,6 +183,7 @@ int instruction_decode(unsigned op,struct_controls *controls)
 /* 5 Points */
 void read_register(unsigned r1,unsigned r2,unsigned *Reg,unsigned *data1,unsigned *data2)
 {
+    // Read the data from each register
     *data1 = Reg[r1];
     *data2 = Reg[r2];
 }
@@ -258,13 +260,10 @@ int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigne
    	    	default:
    	    		return 1;
    	    }
-       	    // call ALU function
-       	    ALU(data1, data2, ALUOp, ALUresult, Zero);
     } 
-    else {
-       	// call ALU for non-functions
-       	ALU(data1, data2, ALUOp, ALUresult, Zero);
-    }
+    
+    // call ALU
+    ALU(data1, data2, ALUOp, ALUresult, Zero);
 
     return 0;
 }
@@ -273,13 +272,12 @@ int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigne
 /* 10 Points */
 int rw_memory(unsigned ALUresult,unsigned data2,char MemWrite,char MemRead,unsigned *memdata,unsigned *Mem)
 {
-    // Check memory alignment
-
-
+    // Write to memory
     if (MemWrite == 1) {
         Mem[ALUresult>>2] = data2;
     }
 
+    // Read from memory and check for word alignment
     if (MemRead == 1) {
     	if (ALUresult % 4 != 0)
     	        return 1;
@@ -295,14 +293,13 @@ int rw_memory(unsigned ALUresult,unsigned data2,char MemWrite,char MemRead,unsig
 void write_register(unsigned r2,unsigned r3,unsigned memdata,unsigned ALUresult,char RegWrite,char RegDst,char MemtoReg,unsigned *Reg)
 {
     unsigned writeReg = (RegDst == 0) ? r2 : r3;
-    //writeReg *= 4;
 
-    // data coming from memory
+    // Data coming from memory
     if (RegWrite == 1 && MemtoReg == 1) {
         Reg[writeReg] = memdata;
     }
 
-    // data coming from ALU ALUresult
+    // Data coming from ALUresult
     if (RegWrite == 1 && MemtoReg == 0) {
         Reg[writeReg] = ALUresult;
     }
@@ -316,27 +313,26 @@ void write_register(unsigned r2,unsigned r3,unsigned memdata,unsigned ALUresult,
 // jump: left shift bits of jsec and use upper 4 bits of PC
 void PC_update(unsigned jsec,unsigned extended_value,char Branch,char Jump,char Zero,unsigned *PC)
 {
+    // If not jumping
     if (Jump == 0) {
-        *PC += 4;
+        *PC += 4; // Increment PC by 4
 
-        // Branch taken
+        // If branch taken
         if (Branch == 1 && Zero == 1) {
             *PC += 4 * extended_value;
         }
-
-
     }
-
-    else {
+    else { // Jump Instruction
         unsigned tempPC = *PC;
 
-        // use upper 4 bits of PC
+        // Use upper 4 bits of PC
         tempPC >>= 28;
         tempPC <<= 28;
 
-        //shift jsec left 2 and use upper bits of PC
+        // Shift jsec left 2 and use upper bits of PC
         jsec <<= 2;
 
+        // Combine them
         *PC = tempPC | jsec;
     }
 }
