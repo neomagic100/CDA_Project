@@ -26,14 +26,10 @@ void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
             *ALUresult = A - B;
             break;
         case 2: // slt
-            *ALUresult = ((Bsigned - Asigned) > 0);
+            *ALUresult = (Asigned < Bsigned);
             break;
-        case 3: // sltu                      // FIXME
-            /**ALUresult = ((A < B) < 0);*/
-            if (A < B)
-              *ALUresult = 1;
-            else
-              *ALUresult = 0;
+        case 3: // sltu
+            *ALUresult = (A < B);
             break;
         case 4: // And
             *ALUresult = A & B;
@@ -52,10 +48,7 @@ void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
     }
 
     // Set Zero
-    if (*ALUresult == 0)
-        *Zero = 1;
-    else
-        *Zero = 0;
+    *Zero = (*ALUresult == 0) ? 1 : 0;
 }
 
 /* instruction fetch */
@@ -205,11 +198,7 @@ void sign_extend(unsigned offset,unsigned *extended_value)
 
     // Check if 16th bit is 1 (negative) or 0 (positive)
     // If positive, no need to sign extend
-    if ((offset >> 15) == 1) {
-        *extended_value = (offset | 0xFFFF0000);
-    }
-    else
-    	*extended_value = offset;
+    *extended_value = ((offset >> 15) == 1) ? (offset | 0xFFFF0000) : offset;
 }
 
 /* ALU operations */
@@ -220,9 +209,8 @@ void sign_extend(unsigned offset,unsigned *extended_value)
 int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigned funct,char ALUOp,char ALUSrc,unsigned *ALUresult,char *Zero)
 {
     // if the ALUSrc is 1, set data2 to extended_value
-   	if (ALUSrc == 1) {
+   	if (ALUSrc == 1)
    		data2 = extended_value;
-   	}
 
    	// 7 is R-type instruction
     if (ALUOp == 7) {
@@ -277,9 +265,8 @@ int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigne
 int rw_memory(unsigned ALUresult,unsigned data2,char MemWrite,char MemRead,unsigned *memdata,unsigned *Mem)
 {
     // Write to memory
-    if (MemWrite == 1) {
+    if (MemWrite == 1)
         Mem[ALUresult>>2] = data2;
-    }
 
     // Read from memory and check for word alignment
     if (MemRead == 1) {
@@ -299,14 +286,12 @@ void write_register(unsigned r2,unsigned r3,unsigned memdata,unsigned ALUresult,
     unsigned writeReg = (RegDst == 0) ? r2 : r3;
 
     // Data coming from memory
-    if (RegWrite == 1 && MemtoReg == 1) {
+    if (RegWrite == 1 && MemtoReg == 1)
         Reg[writeReg] = memdata;
-    }
 
     // Data coming from ALUresult
-    if (RegWrite == 1 && MemtoReg == 0) {
+    if (RegWrite == 1 && MemtoReg == 0)
         Reg[writeReg] = ALUresult;
-    }
 }
 
 /* PC update */
@@ -322,9 +307,8 @@ void PC_update(unsigned jsec,unsigned extended_value,char Branch,char Jump,char 
         *PC += 4; // Increment PC by 4
 
         // If branch taken
-        if (Branch == 1 && Zero == 1) {
+        if (Branch == 1 && Zero == 1)
             *PC += 4 * extended_value;
-        }
     }
     else { // Jump Instruction
         unsigned tempPC = *PC;
