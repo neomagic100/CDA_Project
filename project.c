@@ -1,5 +1,5 @@
 /************************************************************
- *                      MIPS Project 
+ *                      MIPS Project
  *
  * Authors: Michael Bernhardt, Tyler Weber, Zachary Mace
  * Course: CDA 3103C Section 1 (T/Th 9:00 am)
@@ -15,7 +15,7 @@
 /* 10 Points */
 void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
 {
-    signed Asigned = (signed)A; 
+    signed Asigned = (signed)A;
     signed Bsigned = (signed)B;
 
     switch (ALUControl) {
@@ -29,7 +29,11 @@ void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
             *ALUresult = ((Bsigned - Asigned) > 0);
             break;
         case 3: // sltu                      // FIXME
-            *ALUresult = ((A - B) < 0);
+            /**ALUresult = ((A < B) < 0);*/
+            if (A < B)
+              *ALUresult = 1;
+            else
+              *ALUresult = 0;
             break;
         case 4: // And
             *ALUresult = A & B;
@@ -141,19 +145,19 @@ int instruction_decode(unsigned op,struct_controls *controls)
             case 0x8:
             case 0x9:
                 break;
-            case 0xA: //slt
+            case 0xa: //slti
                 controls->ALUOp = 2;
                 break;
-            case 0xB: //sltu
+            case 0xb: //sltiu
                 controls->ALUOp = 3;
                 break;
-            case 0xC: //andi
+            case 0xc: //andi
                 controls->ALUOp = 4;
                 break;
-            case 0xD: //ori
+            case 0xd: //ori
                 controls->ALUOp = 5;
                 break;
-            case 0xF: //lui
+            case 0xf: //lui
                 controls->ALUOp = 6;
                 break;
             default: //catch
@@ -260,8 +264,8 @@ int ALU_operations(unsigned data1,unsigned data2,unsigned extended_value,unsigne
    	    	default:
    	    		return 1;
    	    }
-    } 
-    
+    }
+
     // call ALU
     ALU(data1, data2, ALUOp, ALUresult, Zero);
 
