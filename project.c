@@ -10,11 +10,11 @@
 
 #include "spimcore.h"
 
-
 /* ALU */
 /* 10 Points */
 void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
 {
+    // Get signed representation for A and B for sltu and sltiu
     signed Asigned = (signed)A;
     signed Bsigned = (signed)B;
 
@@ -43,7 +43,7 @@ void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
         case 7: // not A
             *ALUresult = ~A;
             break;
-        default:
+        default: // catch for cases that do not have a defined ALUcontrol
             break;
     }
 
@@ -77,7 +77,7 @@ int instruction_fetch(unsigned PC,unsigned *Mem,unsigned *instruction)
 // No need to check op code. Make copies of all sections.
 void instruction_partition(unsigned instruction, unsigned *op, unsigned *r1,unsigned *r2, unsigned *r3, unsigned *funct, unsigned *offset, unsigned *jsec)
 {
-    // Constants: Bit sizes of instructions
+    // Constants: Bit sizes of instruction parts
     const int OP_BITS = 6;
     const int FUNCT_BITS = 6;
     const int R_BITS = 5;
@@ -283,6 +283,7 @@ int rw_memory(unsigned ALUresult,unsigned data2,char MemWrite,char MemRead,unsig
 /* 10 Points */
 void write_register(unsigned r2,unsigned r3,unsigned memdata,unsigned ALUresult,char RegWrite,char RegDst,char MemtoReg,unsigned *Reg)
 {
+    // Check which register to write to based on RegDst control
     unsigned writeReg = (RegDst == 0) ? r2 : r3;
 
     // Data coming from memory
@@ -308,7 +309,7 @@ void PC_update(unsigned jsec,unsigned extended_value,char Branch,char Jump,char 
 
         // If branch taken
         if (Branch == 1 && Zero == 1)
-            *PC += 4 * extended_value;
+            *PC += 4 * extended_value; // AFter incrementing by 4, multiply extended_value by 4
     }
     else { // Jump Instruction
         unsigned tempPC = *PC;
